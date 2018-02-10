@@ -33,6 +33,13 @@ theme.border_focus  = "#9F9F9F"
 theme.border_marked = "#CC9393"
 -- }}}
 
+
+--volume widget:
+--theme.apw_fg_color 
+--theme.apw_bg_color
+--theme.apw_mute_fg_color
+--theme.apw_mute_bg_color
+
 -- There are other variable sets
 -- overriding the default one when
 -- defined, the sets are:
@@ -97,7 +104,8 @@ theme.layout_centerwork = curdir.."layouts/centerwork.png"
 theme.layout_uselessfairh = curdir.."layouts/fairh.png"
 theme.layout_uselessdwindle = curdir.."layouts/spiral.png"
 
-theme.useless_gap_width = 10
+theme.useless_gap = 5
+theme.gap_single_client = true
 -- }}}
 
 return theme

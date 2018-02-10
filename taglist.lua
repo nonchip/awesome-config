@@ -20,6 +20,13 @@ local beautiful = require("beautiful")
 local fixed = require("wibox.layout.fixed")
 local surface = require("gears.surface")
 
+local function color_strip_alpha(color)
+    if color:len() == 9 then
+        color = color:sub(1, 7)
+    end
+    return color
+end
+
 --- Taglist widget module for awful
 -- awful.widget.taglist
 local taglist = { mt = {} }
@@ -99,7 +106,7 @@ function taglist.taglist_label(t, args)
     end
     if not tag.getproperty(t, "icon_only") then
         if fg_color then
-            text = text .. "<span color='"..util.color_strip_alpha(fg_color).."'>" ..
+            text = text .. "<span color='"..color_strip_alpha(fg_color).."'>" ..
                 (t.name or "") .. "</span>"
         else
             text = text .. (t.name or "")
