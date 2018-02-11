@@ -14,7 +14,8 @@ theme.wallpaper = curdir.."wallpaper.png"
 -- }}}
 
 -- {{{ Styles
-theme.font      = "Fira Sans 9"
+--theme.font      = "Fira Sans 9"
+theme.font      = "square 7"
 
 -- {{{ Colors
 theme.fg_normal  = "#F8F8F2"

@@ -11,7 +11,7 @@ keyHandler = require "handler.key"
 taglist = require "taglist"
 lainLayout = require "lain.layout"
 lain = require "lain"
-tzclock = require "tzclock"
+ncclock = require "ncclock"
 
 unpackJoin = (tablesTable) -> awful.util.table.join(unpack(tablesTable))
 curdir = debug.getinfo(1, "S").source\sub(2)\match("(.*/)")
@@ -45,6 +45,7 @@ shell_once = (...)->
 
 shell 'xrandr --output HDMI-0 --preferred --primary'
 shell 'xrandr --output DVI-I-0 --right-of HDMI-0'
+shell curdir..'/genentries'
 --shell 'killall cinnamon-settings-daemon; sleep 1; cinnamon-settings-daemon'
 --shell "killall compton; sleep 2; compton",
 --  "-cCzG -t-3 -l-5 -r4",
@@ -65,6 +66,7 @@ shell_once '/opt/Telegram/Telegram'
 shell_once 'quasselclient'
 shell_once 'claws-mail'
 shell_once 'nm-applet'
+shell_once "quodlibet"
 
 -- {{{ Variable definitions
 beautiful.init(curdir.."themes/focuspoint/theme.lua")
@@ -113,13 +115,14 @@ if beautiful.wallpaper
 --  tags[s] = mytags
 tags = {
   [1]: awful.tag({ --left screen
-    '1 '
-    '2 '
-    '3 '
-    '4 '
+    '1'
+    '2'
+    '3'
+    '4'
   }, 1, awful.layout.layouts[1])
   [2]: awful.tag({ -- right screen
-    '1 '
+    '1'
+    "2<span font='FontAwesome 9'></span>" -- that's a music note in fontawesome
   }, 2, awful.layout.layouts[1])
 }
 tags[2][1].master_width_factor=0.75
@@ -131,7 +134,8 @@ menubar.utils.terminal = 'st -e' -- Set the terminal for applications that requi
 
 -- {{{ Wibox
 -- Create a textclock widget
-myclock = tzclock("Europe/Berlin", -5)
+--myclock = tzclock('', 2)
+myclock = ncclock!
 --nswclock = tzclock("AEST", 9) -- Doesn't account for daylight time
 
 termquake=lain.util.quake{
@@ -255,9 +259,9 @@ globalkeys = do
     "XF86AudioLowerVolume": APW.Down
     "XF86AudioMute": APW.ToggleMute
     -- Media keys
-    "XF86AudioPrev": -> launch "playerctl previous", false
-    "XF86AudioPlay": -> launch "playerctl play-pause", false
-    "XF86AudioNext": -> launch "playerctl next", false
+    --"XF86AudioPrev": ->
+    --"XF86AudioPlay": ->
+    --"XF86AudioNext": ->
     meta:
       -- Standard programs
       Tab: ->
@@ -269,7 +273,7 @@ globalkeys = do
       f: -> launch "nemo"
       e: -> launch "/opt/sublime_text_3/sublime_text"
       w: -> launch "chromium"
-      r: -> launch "xlunch --bc 00000077 -t", false
+      r: -> launch "xlunch --bc 00000077 -t -i "..os.getenv('HOME').."/.config/awesome/xlunch.cfg", false
       Return: termquake\toggle
       -- Jump between tags
       Left: tag.viewprev
@@ -289,11 +293,13 @@ globalkeys = do
         Tab: ->
           if n=awful.client.next(-1)
             n\jump_to!
+        Return: ->
+          launch 'st -e tmxgrp 0'
         j: -> awful.client.swap.byidx(1)
         k: -> awful.client.swap.byidx(-1)
         h: -> awful.tag.incnmaster(1)
         l: -> awful.tag.incnmaster(-1)
-        space: -> awful.layout.inc(awful.layout.layouts, 1, 1)
+        space: -> awful.layout.inc(1, awful.screen.focused!.index)
         n: awful.client.restore
 
       ctrl:
@@ -363,9 +369,10 @@ clientbuttons = mouseHandler
 
 awful.rules.rules = {
   {
-    -- All clients will match this rule.
+--- defaults
     rule: {}
-    except: { instance: "QuakeDD"}
+    except: 
+      instance: "QuakeDD"
     properties:
       border_width: beautiful.border_width
       border_color: beautiful.border_normal
@@ -376,6 +383,22 @@ awful.rules.rules = {
     callback: (c)->
       c.maximized, c.maximized_vertical, c.maximized_horizontal = false, false, false
   }
+
+--- left monitor
+  {
+    rule: class: "Chromium"
+    properties: tag: tags[1][2]
+  }
+  {
+    rule: class: "Claws-mail"
+    properties: tag: tags[1][3]
+  }
+  {
+    rule: name: "PlayOnLinux"
+    properties: tag: tags[1][4]
+  }
+
+--- right monitor
   {
     rule: class: "TelegramDesktop"
     properties:
@@ -387,12 +410,8 @@ awful.rules.rules = {
     properties: tag: tags[2][1]
   }
   {
-    rule: class: "Claws-mail"
-    properties: tag: tags[1][3]
-  }
-  {
-    rule: class: "Chromium"
-    properties: tag: tags[1][2]
+    rule: class: "Quodlibet"
+    properties: tag: tags[2][2]
   }
 }
 

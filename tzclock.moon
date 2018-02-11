@@ -6,7 +6,7 @@ tzClock = (name, offset) ->
     handler = ->
         utc = os.date("!*t", os.time!)
         tz = os.time(utc) + offset*3600
-        w\set_markup(os.date(" <b>#{name}</b>: %a %b %d, %H:%M ", tz))
+        w\set_markup(os.date((name=='' and '' or " <b>#{name}</b>:").." %a %b %d, %H:%M ", tz))
     t\connect_signal "timeout", handler
     t\start()
     t\emit_signal("timeout")
