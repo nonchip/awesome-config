@@ -45,7 +45,7 @@ shell_once = (...)->
 
 shell 'xrandr --output HDMI-0 --preferred --primary'
 shell 'xrandr --output DVI-I-0 --right-of HDMI-0'
-shell curdir..'/genentries'
+--shell curdir..'/genentries'
 --shell 'killall cinnamon-settings-daemon; sleep 1; cinnamon-settings-daemon'
 --shell "killall compton; sleep 2; compton",
 --  "-cCzG -t-3 -l-5 -r4",
@@ -67,6 +67,9 @@ shell_once 'quasselclient'
 shell_once 'claws-mail'
 shell_once 'nm-applet'
 shell_once "quodlibet"
+shell_once "steam"
+shell_once "playonlinux"
+shell_once "/home/kyra/bin/Discord/Discord"
 
 -- {{{ Variable definitions
 beautiful.init(curdir.."themes/focuspoint/theme.lua")
@@ -259,9 +262,10 @@ globalkeys = do
     "XF86AudioLowerVolume": APW.Down
     "XF86AudioMute": APW.ToggleMute
     -- Media keys
-    --"XF86AudioPrev": ->
-    --"XF86AudioPlay": ->
-    --"XF86AudioNext": ->
+    "XF86AudioPrev": -> launch "quodlibet --previous"
+    "XF86AudioStop": -> launch "quodlibet --pause"
+    "XF86AudioPlay": -> launch "quodlibet --play-pause"
+    "XF86AudioNext": -> launch "quodlibet --next"
     meta:
       -- Standard programs
       Tab: ->
@@ -270,10 +274,11 @@ globalkeys = do
         else
           if n=awful.client.next(1)
             n\jump_to!
-      f: -> launch "nemo"
+      --f: -> launch "nemo"
       e: -> launch "/opt/sublime_text_3/sublime_text"
       w: -> launch "chromium"
-      r: -> launch "xlunch --bc 00000077 -t -i "..os.getenv('HOME').."/.config/awesome/xlunch.cfg", false
+      r: -> --launch "xlunch --bc 00000077 -t -i "..os.getenv('HOME').."/.config/awesome/xlunch.cfg", false
+        launch "rofi -combi-modi drun,run -scroll-method 1 -show-icons -modi combi -show combi"
       Return: termquake\toggle
       -- Jump between tags
       Left: tag.viewprev
@@ -310,18 +315,44 @@ globalkeys = do
         r: awesome.restart
         shift: q: awesome.quit
 
-clientkeys = keyHandler
-  meta:
-    space:  awful.client.floating.toggle
-    ctrl:
-      "Return": (c)-> c\swap(awful.client.getmaster!)
-    q: (c)-> c\kill!
-    o: awful.client.movetoscreen
-    t:(c)-> c.ontop = not c.ontop
-    n:(c)-> c.minimized = true
-    m: (c)->
-      c.maximized_horizontal = not c.maximized_horizontal
-      c.maximized_vertical = not c.maximized_vertical
+
+cleanup_temp_tags=->
+  for s= 1, screen.count!
+    for t in *awful.tag.gettags(s)
+      tn=t.name
+      if tn\match'〔[0-9]+〕' and #t\clients! < 1 and not t.selected
+        t\delete!
+
+get_or_create_tag=(screen,i)->
+  gears.timer.delayed_call cleanup_temp_tags
+  tag = awful.tag.gettags(screen)[i]
+  return tag if tag
+  awful.tag.add '〔'..i..'〕', {
+    :screen
+    layout: awful.layout.layouts[1]
+    volatile: true
+  }
+
+
+clientkeys = do 
+  gap_bak=beautiful.useless_gap
+  keyHandler
+    meta:
+      f: (c)->
+        c.fullscreen = not c.fullscreen
+        --beautiful.useless_gap = c.fullscreen and 0 or gap_bak
+      space:  awful.client.floating.toggle
+      ctrl:
+        "Return": (c)-> c\swap(awful.client.getmaster!)
+      q: (c)->
+        c\kill!
+        gears.timer.delayed_call cleanup_temp_tags
+      o: awful.client.movetoscreen
+      t:(c)-> c.ontop = not c.ontop
+      n:(c)-> c.minimized = true
+      m: (c)->
+        c.maximized_horizontal = not c.maximized_horizontal
+        c.maximized_vertical = not c.maximized_vertical
 
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it works on any keyboard layout.
@@ -332,24 +363,26 @@ for i = 1, 9
       meta:
         -- View tag only
         ['#'..i+9]: ->
-          screen = mouse.screen
-          tag = awful.tag.gettags(screen)[i]
-          awful.tag.viewonly(tag) if tag
+          tag = get_or_create_tag mouse.screen, i
+          tag\view_only! if tag
+          gears.timer.delayed_call cleanup_temp_tags
         -- Move client to tag
         shift: ['#'..i+9]: ->
           if client.focus
-            tag = awful.tag.gettags(client.focus.screen)[i]
+            tag = get_or_create_tag client.focus.screen, i
             awful.client.movetotag(tag)  if tag
+          gears.timer.delayed_call cleanup_temp_tags
         -- Toggle tag
         ctrl:
           ['#'..i+9]: ->
-            screen = mouse.screen
-            tag = awful.tag.gettags(screen)[i]
+            tag = get_or_create_tag mouse.screen, i
             awful.tag.viewtoggle(tag)  if tag
+            gears.timer.delayed_call cleanup_temp_tags
           shift: ['#'..i+9]: ->
               if client.focus
-                tag = awful.tag.gettags(client.focus.screen)[i]
+                tag = get_or_create_tag client.focus.screen, i
                 awful.client.toggletag(tag)  if tag
+              gears.timer.delayed_call cleanup_temp_tags
 
 -- Set keys
 root.keys(globalkeys)
@@ -396,6 +429,22 @@ awful.rules.rules = {
   {
     rule: name: "PlayOnLinux"
     properties: tag: tags[1][4]
+    callback: (c)->
+      if c.size_hints and c.size_hints.min_width==400 and c.size_hints.min_height==400 -- main window sets these
+        return
+      else
+        c.floating = true
+  }
+  {
+    rule: class: "Steam"
+    properties: tag: tags[1][4]
+  }
+  {
+    rule:
+      class: "Steam"
+      name: "^Steam %- News "
+    callback: (c)->
+      c\kill!
   }
 
 --- right monitor
@@ -404,6 +453,12 @@ awful.rules.rules = {
     properties:
       tag: tags[2][1]
     callback: awful.client.setslave
+  }
+  {
+    rule: class: "discord"
+    properties:
+      tag: tags[2][1]
+      floating: true
   }
   {
     rule: class: "Quasselclient"

@@ -49,7 +49,7 @@ theme.border_marked = "#CC9393"
 -- tooltip_[font|opacity|fg_color|bg_color|border_width|border_color]
 -- Example:
 --theme.taglist_bg_focus = "#CC9393"
-theme.tasklist_disable_icon = true
+theme.tasklist_disable_icon = false
 -- }}}
 
 -- {{{ Widgets
