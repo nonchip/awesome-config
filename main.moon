@@ -56,10 +56,11 @@ shell 'xrandr --output DVI-I-0 --right-of HDMI-0'
 --shell 'killall pulseaudio; sleep 2; start-pulseaudio-x11'
 shell_once 'cinnamon-settings-daemon'
 shell_once "compton",
-  "-cCzG -t-3 -l-5 -r4",
-  "--config /dev/null",
+  "-cCzG -t-6 -l-6 -r4 -i0.975",
+  "--config /dev/null --blur-background --blur-kern 3x3gaussian",
   "--backend glx --xrender-sync-fence --unredir-if-possible",
-  "--shadow-exclude 'argb && _NET_WM_OPAQUE_REGION@:c || bounding_shaped'"
+  "--shadow-exclude 'argb && _NET_WM_OPAQUE_REGION@:c || bounding_shaped'",
+  "--blur-background-exclude 'argb && _NET_WM_OPAQUE_REGION@:c || bounding_shaped'"
 shell_once 'ckb --background'
 shell 'pgrep -u $USER -x pulseaudio || start-pulseaudio-x11'
 shell_once '/opt/Telegram/Telegram'
@@ -67,8 +68,8 @@ shell_once 'quasselclient'
 shell_once 'claws-mail'
 shell_once 'nm-applet'
 shell_once "quodlibet"
-shell_once "steam"
-shell_once "playonlinux"
+shell_once "lutris"
+shell "setxkbmap -option compose:rwin"
 shell_once "/home/kyra/bin/Discord/Discord"
 
 -- {{{ Variable definitions
@@ -436,8 +437,16 @@ awful.rules.rules = {
         c.floating = true
   }
   {
+    rule: class: "Lutris"
+    properties: tag: tags[1][4]
+  }
+  {
     rule: class: "Steam"
     properties: tag: tags[1][4]
+  }
+  {
+    rule: class: "gw2-64.exe"
+    properties: tag: tags[1][4], floating: true
   }
   {
     rule:
